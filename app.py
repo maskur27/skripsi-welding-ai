@@ -52,7 +52,7 @@ with st.container():
     st.markdown('<div class="stHeader"><h1>🏗️ Welding Defect AI Inspection System</h1><p style="color:#9ca3af;">Deep Learning Implementation using U-Net Architecture for Industrial Quality Control</p></div>', unsafe_allow_html=True)
 
 # 3. Sidebar (Control Panel)
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2610/2610332.png", width=100) # Icon Las
+st.sidebar.image("https://i.etsystatic.com/15969478/r/il/730e33/5643777490/il_1588xN.5643777490_rqr0.jpg", width=100) # Icon Las
 st.sidebar.title("Control Panel")
 st.sidebar.info("Gunakan panel ini untuk mengatur sensitivitas deteksi model U-Net.")
 
