@@ -6,7 +6,7 @@ import cv2
 
 # 1. Konfigurasi Halaman & Tema Industrial
 st.set_page_config(
-    page_title="WeldingDefect - AI Inspection",
+    page_title="WeldingDefect AI - Linda Marlinda",
     page_icon="🏗️",
     layout="wide"
 )
@@ -21,12 +21,12 @@ st.markdown("""
         background-color: #1f2937;
         padding: 1.5rem;
         border-radius: 10px;
-        border-left: 5px solid #f59e0b; /* Aksen Kuning Industri */
+        border-left: 5px solid #f59e0b;
         margin-bottom: 2rem;
     }
     h1 {
         color: #f3f4f6;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
     }
     .stButton>button {
         background-color: #f59e0b;
@@ -35,110 +35,105 @@ st.markdown("""
         width: 100%;
         border-radius: 5px;
     }
-    .stButton>button:hover {
-        background-color: #d97706;
-        color: white;
-    }
-    .status-box {
-        padding: 1rem;
-        border-radius: 5px;
-        margin-top: 1rem;
-    }
     </style>
     """, unsafe_allow_html=True)
 
 # 2. Header Dashboard
 with st.container():
-    st.markdown('<div class="stHeader"><h1>🏗️ Welding Defect AI Inspection System</h1><p style="color:#9ca3af;">Deep Learning Implementation using U-Net Architecture for Industrial Quality Control</p></div>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="stHeader">
+            <h1>🏗️ Welding Defect AI Inspection System</h1>
+            <p style="color:#9ca3af;">Implementation of Hybrid Transformer & Residual-Dilated-Inception U-Net Architecture</p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # 3. Sidebar (Control Panel)
-st.sidebar.image("https://i.etsystatic.com/15969478/r/il/730e33/5643777490/il_1588xN.5643777490_rqr0.jpg", width=100) # Icon Las
 st.sidebar.title("Control Panel")
-st.sidebar.info("Gunakan panel ini untuk mengatur sensitivitas deteksi model U-Net.")
+st.sidebar.info("Sesuaikan ambang batas deteksi untuk hasil segmentasi yang lebih akurat.")
 
 conf_threshold = st.sidebar.slider("Confidence Threshold", 0.1, 1.0, 0.45)
 st.sidebar.markdown("---")
-st.sidebar.write("**Model Info:**")
-st.sidebar.code("Architecture: U-Net\nFramework: YOLOv8-Seg\nInput Size: 640x640")
+st.sidebar.write("**Model Technical Details:**")
+st.sidebar.code("Base: YOLOv8-Segmentation\nDecoder: U-Net Structure\nFeature Extractor: Hybrid Transformer\nInput: 640x640")
 
 # 4. Load Model
 @st.cache_resource
 def load_model():
+    # Memuat weights terbaik hasil training kamu
     return YOLO('best.pt') 
 
 try:
     model = load_model()
 except Exception as e:
-    st.error(f"Gagal memuat model: {e}. Pastikan file 'best.pt' ada di folder yang sama.")
+    st.error(f"Gagal memuat model: {e}. Pastikan file 'best.pt' tersedia.")
 
 # 5. Area Utama (Upload & Hasil)
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
     st.subheader("📁 Input Image")
-    uploaded_file = st.file_uploader("Upload foto alur las...", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Unggah foto permukaan las (JPG/PNG)...", type=["jpg", "jpeg", "png"])
     
     if uploaded_file:
         image = Image.open(uploaded_file)
-        st.image(image, caption="Citra Masukan Mentah", use_container_width=True)
+        st.image(image, caption="Original Input Image", use_container_width=True)
 
 with col2:
     st.subheader("🔍 Analysis Result")
     if uploaded_file is not None:
-        with st.spinner('🔄 Memproses AI Segmentation...'):
-            # Jalankan Prediksi
-            results = model.predict(source=image, conf=conf_threshold)
-            
-            # Plot Hasil (Masker Biru)
-            res_plotted = results[0].plot()
-            st.image(res_plotted, caption="Visualisasi Masker Abnormalitas", use_container_width=True)
-            
-            # Metadata Hasil
-            count = len(results[0].boxes)
-            # Metadata Hasil Dinamis
-            if len(results[0].boxes) > 0:
-                # Ambil nama kelas dari hasil deteksi pertama
-                class_id = int(results[0].boxes[0].cls)
-                class_name = model.names[class_id] # Akan muncul 'Good Weld' atau 'Bad Weld'
-                conf_score = results[0].boxes[0].conf[0]
-                
-                if "Bad" in class_name:
-                    # Jika terdeteksi cacat
-                    st.markdown(f"""
-                        <div style="background-color: #7f1d1d; color: white; padding: 15px; border-radius: 5px; text-align: center;">
-                            ⚠️ <b>HASIL ANALISIS: TERDETEKSI CACAT ({class_name})</b><br>
-                            Sistem mendeteksi area abnormalitas dengan keyakinan {conf_score:.2f}.
-                        </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    # Jika terdeteksi las bagus
-                    st.markdown(f"""
-                        <div style="background-color: #064e3b; color: white; padding: 15px; border-radius: 5px; text-align: center;">
-                            ✅ <b>HASIL ANALISIS: PENGELASAN BAIK ({class_name})</b><br>
-                            Alur las terdeteksi normal dengan keyakinan {conf_score:.2f}.
-                        </div>
-                    """, unsafe_allow_html=True)
-            else:
-                # Jika sama sekali tidak ada yang terdeteksi
-                st.info("Sistem tidak menemukan objek alur las yang dikenali. Coba sesuaikan Confidence Threshold.")
+        with st.spinner('🔄 Analyzing Surface with Hybrid AI...'):
+            # --- TAHAP PRE-PROCESSING ---
+            # Konversi PIL ke OpenCV (BGR) untuk stabilitas koordinat YOLO
+            img_array = np.array(image)
+            img_cv2 = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
-# 6. Footer Analisis Teknik
-if uploaded_file:
+            # --- TAHAP INFERENSI ---
+            # Menjalankan model pada image yang sudah dikonversi
+            results = model.predict(source=img_cv2, conf=conf_threshold, save=False)
+            
+            # --- TAHAP VISUALISASI ---
+            # results[0].plot() secara otomatis menangani rescaling koordinat 640x640 kembali ke ukuran asli
+            res_plotted = results[0].plot(line_width=3, font_size=3)
+            
+            # Konversi kembali ke RGB untuk tampilan Streamlit
+            res_rgb = cv2.cvtColor(res_plotted, cv2.COLOR_BGR2RGB)
+            st.image(res_rgb, caption="AI-Generated Segmentation Mask", use_container_width=True)
+            
+            # --- ANALISIS HASIL ---
+            if len(results[0].boxes) > 0:
+                # Mengambil informasi dari deteksi pertama (paling dominan)
+                box = results[0].boxes[0]
+                class_id = int(box.cls)
+                class_name = model.names[class_id]
+                conf_score = float(box.conf[0])
+                
+                # Tampilan status berdasarkan klasifikasi
+                if "Bad" in class_name:
+                    color = "#7f1d1d" # Red dark
+                    status = f"⚠️ TERDETEKSI CACAT: {class_name.upper()}"
+                else:
+                    color = "#064e3b" # Green dark
+                    status = f"✅ KUALITAS BAIK: {class_name.upper()}"
+                
+                st.markdown(f"""
+                    <div style="background-color: {color}; color: white; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid white;">
+                        <h3 style="margin:0;">{status}</h3>
+                        <p style="margin-top:10px;">Confidence Score: <b>{conf_score:.2f}</b></p>
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.warning("Objek tidak terdeteksi. Silakan turunkan Confidence Threshold di panel kiri.")
+
+# 6. Footer Metrik Teknik
+if uploaded_file and len(results[0].boxes) > 0:
     st.markdown("---")
-    st.subheader("📊 Metrik Teknis")
-    cols = st.columns(4)
+    st.subheader("📊 Engineering Metrics")
+    m_cols = st.columns(3)
     
-    # Menghitung Luas Masker (Sangat bagus untuk Gap Penelitian)
-    if count > 0 and results[0].masks is not None:
-        # Menghitung jumlah piksel masker
-        total_area = 0
-        for mask in results[0].masks.data:
-            total_area += (mask > 0).sum().item()
-        
-        cols[0].metric("Defect Area", f"{total_area} Px", "Pixel count")
-    else:
-        cols[0].metric("Defect Area", "0 Px", "Clean")
-        
-    cols[1].metric("Inference Time", f"{results[0].speed['inference']:.2f} ms")
-    cols[2].metric("Pre-process", f"{results[0].speed['preprocess']:.2f} ms")
-    cols[3].metric("Image Size", f"{image.size[0]}x{image.size[1]}")
+    # Menghitung Luas Masker dalam Pixel
+    if results[0].masks is not None:
+        pixel_area = (results[0].masks.data > 0).sum().item()
+        m_cols[0].metric("Defect Surface Area", f"{pixel_area} Px")
+    
+    m_cols[1].metric("Inference Speed", f"{results[0].speed['inference']:.1f} ms")
+    m_cols[2].metric("Processing Speed", f"{results[0].speed['preprocess']:.1f} ms")
