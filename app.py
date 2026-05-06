@@ -6,7 +6,7 @@ import cv2
 
 # 1. Konfigurasi Halaman (Centered & Industrial Theme)
 st.set_page_config(
-    page_title="WeldingDefect AI - Linda Marlinda",
+    page_title="WeldingDefect AI - KURNIYAWANTORO",
     page_icon="🏗️",
     layout="wide"
 )
